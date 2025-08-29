@@ -1,8 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
-
-db = SQLAlchemy()
+from src.extensions import db 
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)

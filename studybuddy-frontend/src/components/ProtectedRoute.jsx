@@ -1,11 +1,11 @@
-import React from 'react'
-import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
-import { Loader2 } from 'lucide-react'
+import React from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth()
-  const location = useLocation()
+  const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -15,15 +15,15 @@ const ProtectedRoute = ({ children }) => {
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+  // Extra check: user should be an object, not empty
+  if (!isAuthenticated || !user || Object.keys(user).length === 0) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return children
-}
+  return children;
+};
 
-export default ProtectedRoute
-
+export default ProtectedRoute;

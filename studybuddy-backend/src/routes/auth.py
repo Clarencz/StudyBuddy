@@ -77,32 +77,32 @@ def register():
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        
+
         # Sanitize input data
         data = sanitize_input(data)
-        
+
         # Validate required fields
         required_fields = ['username', 'email', 'password', 'first_name', 'last_name']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({'error': f'{field} is required'}), 400
-        
+
         # Validate email format
         if not validate_email(data['email']):
             return jsonify({'error': 'Invalid email format'}), 400
-        
+
         # Validate password strength
         is_valid, message = validate_password(data['password'])
         if not is_valid:
             return jsonify({'error': message}), 400
-        
+
         # Check if user already exists
         if User.query.filter_by(email=data['email']).first():
             return jsonify({'error': 'Email already registered'}), 409
-        
+
         if User.query.filter_by(username=data['username']).first():
             return jsonify({'error': 'Username already taken'}), 409
-        
+
         # Create new user
         user = User(
             username=data['username'],
@@ -111,22 +111,41 @@ def register():
             last_name=data['last_name']
         )
         user.set_password(data['password'])
-        
+
         db.session.add(user)
         db.session.commit()
-        
-        # Generate token
-        token = user.generate_token()
-        
+
+        # Generate token safely
+        try:
+            token = user.generate_token()
+        except Exception as token_err:
+            current_app.logger.error(f"Token generation failed: {str(token_err)}")
+            token = None  # fallback to None
+
+        # Build user dict safely
+        try:
+            user_dict = user.to_dict()
+        except Exception as dict_err:
+            current_app.logger.error(f"user.to_dict() failed: {str(dict_err)}")
+            user_dict = {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            }
+
         return jsonify({
             'message': 'User registered successfully',
             'token': token,
-            'user': user.to_dict()
+            'user': user_dict
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Registration failed'}), 500
+        current_app.logger.error(f"Registration failed: {str(e)}")
+        return jsonify({'error': f'Registration failed: {str(e)}'}), 500
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -135,50 +154,67 @@ def login():
         data = request.get_json()
         if not data:
             return jsonify({'error': 'No data provided'}), 400
-        
+
         # Sanitize input
         data = sanitize_input(data)
-        
-        email = data.get('email')
-        password = data.get('password')
-        
+
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '')
+
         if not email or not password:
             return jsonify({'error': 'Email and password are required'}), 400
-        
-        # Find user by email
+
+        # Find user by normalized email
         user = User.query.filter_by(email=email).first()
-        
+
         if not user:
-            return jsonify({'error': 'Invalid credentials'}), 401
-        
-        # Check if account is locked
-        if user.is_account_locked():
-            return jsonify({
-                'error': 'Account is temporarily locked due to multiple failed login attempts'
-            }), 423
-        
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        # Check account lock
+        if hasattr(user, "is_account_locked") and user.is_account_locked():
+            return jsonify({'error': 'Account temporarily locked'}), 423
+
         # Check password
         if not user.check_password(password):
-            user.increment_failed_login()
-            return jsonify({'error': 'Invalid credentials'}), 401
-        
-        # Reset failed login attempts on successful login
-        user.reset_failed_login()
-        
-        # Update last activity and streak
-        user.update_streak()
-        
-        # Generate token
-        token = user.generate_token()
-        
-        return jsonify({
-            'message': 'Login successful',
-            'token': token,
-            'user': user.to_dict()
-        }), 200
-        
+            if hasattr(user, "increment_failed_login"):
+                user.increment_failed_login()
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        # Reset failed login attempts
+        if hasattr(user, "reset_failed_login"):
+            user.reset_failed_login()
+
+        # Update streak/last activity
+        if hasattr(user, "update_streak"):
+            user.update_streak()
+
+        # Generate token safely
+        try:
+            token = user.generate_token()
+        except Exception as token_err:
+            current_app.logger.error(f"Token generation failed: {str(token_err)}")
+            token = None
+
+        # Build user dict safely
+        try:
+            user_dict = user.to_dict()
+        except Exception as dict_err:
+            current_app.logger.error(f"user.to_dict() failed: {str(dict_err)}")
+            user_dict = {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            }
+
+        return jsonify({'message': 'Login successful', 'token': token, 'user': user_dict}), 200
+
     except Exception as e:
-        return jsonify({'error': 'Login failed'}), 500
+        current_app.logger.error(f"Login error: {str(e)}")
+        return jsonify({'error': f'Login failed: {str(e)}'}), 500
+
+
 
 @auth_bp.route('/verify-token', methods=['POST'])
 @token_required

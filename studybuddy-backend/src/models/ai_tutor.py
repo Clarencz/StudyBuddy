@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
-
-db = SQLAlchemy()
+from src.extensions import db
+# db = SQLAlchemy()
 
 class AIConversation(db.Model):
     id = db.Column(db.Integer, primary_key=True)

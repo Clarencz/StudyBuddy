@@ -5,7 +5,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
-from src.models.user import db
+from src.extensions import db
+from src.models import User, StudyRoom, Document  # etc.
 from src.models.study_room import StudyRoom, RoomMembership, StudySession
 from src.models.ai_tutor import AIConversation, AIMessage, Flashcard, PracticeTest
 from src.models.document import Document, DocumentShare
@@ -16,6 +17,7 @@ from src.routes.ai_tutor import ai_bp
 from src.routes.document import document_bp
 from src.routes.payment import payment_bp
 from src.routes.external_services import external_bp
+
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'studybuddy-secret-key-change-in-production')

@@ -1,10 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import uuid
-
-db = SQLAlchemy()
+from src.extensions import db
+# db = SQLAlchemy()
 
 class StudyRoom(db.Model):
+    __tablename__ = "study_room"
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     room_code = db.Column(db.String(10), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
@@ -58,6 +61,9 @@ class StudyRoom(db.Model):
         }
 
 class RoomMembership(db.Model):
+    __tablename__ = "room_membership"
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     room_id = db.Column(db.Integer, db.ForeignKey('study_room.id'), nullable=False)
@@ -78,6 +84,9 @@ class RoomMembership(db.Model):
         }
 
 class StudySession(db.Model):
+    __tablename__ = "study_session"
+    
+    
     id = db.Column(db.Integer, primary_key=True)
     room_id = db.Column(db.Integer, db.ForeignKey('study_room.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
