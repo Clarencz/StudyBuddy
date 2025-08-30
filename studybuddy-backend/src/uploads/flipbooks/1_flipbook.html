@@ -1,0 +1,701 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Study_Buddy_Prototype_Project_Files_1.pdf - StudyBuddy Flipbook</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                    background: #f5f5f5;
+                }
+                .flipbook-container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    overflow: hidden;
+                }
+                .flipbook-header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 20px;
+                    text-align: center;
+                }
+                .flipbook-content {
+                    padding: 20px;
+                    line-height: 1.6;
+                    white-space: pre-wrap;
+                }
+                .page-info {
+                    background: #f8f9fa;
+                    padding: 10px;
+                    text-align: center;
+                    border-top: 1px solid #dee2e6;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="flipbook-container">
+                <div class="flipbook-header">
+                    <h1>Study_Buddy_Prototype_Project_Files_1.pdf</h1>
+                    <p>StudyBuddy Interactive Document</p>
+                </div>
+                <div class="flipbook-content">
+                    StudyBuddy — Full-Stack Prototype (Community +
+Personal)
+This single document contains all the files you can copy into a repo to demo a working prototype. The app
+mimics  a  project-management  UI  (Kanban-style)  for  study  rooms,  supports  AI  tutoring  &  quizzing , 
+whiteboard/pen , PDF → flipbook , Google Meet/Zoom links , invites , and IntaSend payments  (KES 650/
+user/year). It has clear frontend / backend separation .
+Folder layout 
+studybuddy/
+  README.md
+  TECH_STACK.md
+  PROMPTS.md
+  backend/
+    app.py
+    requirements.txt
+    routers/
+      auth.py
+      rooms.py
+      ai.py
+      files.py
+      payments.py
+    models.py
+    db.py
+  frontend/
+    index.html
+    styles.css
+    app.js
+    whiteboard.js
+    flipbook.js
+FILE: README.md
+# StudyBuddy — AI Study + Community Rooms (SDG 4)
+**Problem** : Students struggle with consistency, affordable personalized help, 
+isolation, and generic tools.
+**Solution** : Project-style study rooms with AI tutor (Q&A, summaries, 
+1
+flashcards, practice tests), community features, whiteboard, PDF-to-flipbook 
+viewer, Google Meet/Zoom links, invites, and IntaSend payments.
+## Key Features
+-Project-style **Kanban**  (To Do / Doing / Done) for tasks per study room
+-**AI Tutor** : Q&A, summaries, flashcards, quizzes (Hugging Face / OpenAI)
+-**Whiteboard** : pen tool with export
+-**PDF Upload → Flipbook**  viewer
+-**Meet Links** : attach Google Meet or Zoom links to sessions
+-**Invite**  participants via shareable link
+-**Payments** : IntaSend (KES 650/user/year) — stubbed checkout endpoint
+-Responsive: **Mobile + Desktop**
+## Quickstart
+1.**Backend**
+   ```bash
+cdbackend
+python-mvenvvenv&&sourcevenv/bin/activate
+pipinstall -rrequirements.txt
+exportDB_URL="sqlite:///studybuddy.db" # quick demo DB
+exportHF_API="<optional_token>" # if using Hugging Face
+uvicorn app:app --reload
+   ```
+2.**Frontend**
+-Open `frontend/index.html`  in a dev server (e.g., `npx serve frontend` )
+## Notes
+-Payments & AI calls are wired with safe fallbacks/mocks for demo.
+-Replace stub tokens and implement real keys before production.
+---
+## FILE: TECH_STACK.md
+```md
+# Tech Stack & Versions
+- **Backend**: FastAPI 0.110+, Uvicorn 0.29+, Pydantic 2+
+- **DB**: SQLite for demo (swap to PostgreSQL easily)
+- **ORM**: SQLAlchemy 2.0+
+- **Auth**: JWT (python-jose 3.3+)
+- **AI**: requests to Hugging Face Inference API or OpenAI (optional)
+- **Frontend**: Vanilla JS + HTML/CSS (no build step) for portability
+- **UI**: Kanban-style boards, modal dialogs
+- **Payments**: IntaSend (REST) — stub endpoints
+- **PDF**: PDF.js for parsing text (simplified) + custom CSS flipbook
+2
+> Reasoning: Avoid collisions by pinning major versions; SQLite for fast demo, 
+switch to Postgres in env.
+---
+## FILE: PROMPTS.md
+```md
+# Prompts used during creation & runtime
+## Logo Design Prompt
+A modern and sleek logo for an AI-powered branding agency. Minimalist design, 
+futuristic font, blue and purple gradient color scheme, with an abstract AI 
+brain + digital spark symbol.
+## AI Tutor — Summarize Notes
+"Summarize these notes into 5 bullet points and 5 flashcards (Q/A). Return JSON: 
+{ bullets: string[], flashcards: {question, answer}[] }.\nNOTES:\n{{notes}}"
+## AI Tutor — Quiz Generator
+"Create 8 multiple-choice questions (A–D) from these notes with one correct 
+answer each. Return JSON array of {question, options:[A,B,C,D], correctIndex}.
+\nNOTES:\n{{notes}}"
+## AI Tutor — Q&A
+"Answer this question clearly in under 150 words and include one example at the 
+end.\nQUESTION: {{question}}"
+---
+## FILE: backend/requirements.txt
+```txt
+fastapi==0.111.0
+uvicorn==0.30.1
+sqlalchemy==2.0.30
+pydantic==2.7.1
+python-multipart==0.0.9
+python-jose==3.3.0
+passlib[bcrypt]==1.7.4
+requests==2.32.3
+pdfminer.six==20231228
+3
+FILE: backend/db.py
+fromsqlalchemy importcreate_engine
+fromsqlalchemy.orm importsessionmaker ,declarative_base
+importos
+DB_URL=os.getenv("DB_URL" ,"sqlite:///studybuddy.db" )
+engine=create_engine (DB_URL,connect_args ={"check_same_thread" :False}if
+DB_URL.startswith ("sqlite" )else{})
+SessionLocal =sessionmaker (bind=engine,autoflush =False,autocommit =False)
+Base=declarative_base ()
+defget_db():
+fromcontextlib importcontextmanager
+@contextmanager
+def_session_scope ():
+db=SessionLocal ()
+try:
+yielddb
+db.commit()
+exceptException :
+db.rollback ()
+raise
+finally:
+db.close()
+return_session_scope ()
+FILE: backend/models.py
+fromsqlalchemy importColumn,Integer,String,Text,ForeignKey ,DateTime ,
+Boolean
+fromsqlalchemy.orm importrelationship
+fromdatetime importdatetime
+fromdbimportBase
+classUser(Base):
+__tablename__ ="users"
+id=Column(Integer,primary_key =True)
+email=Column(String,unique=True,index=True)
+name=Column(String)
+password_hash =Column(String)
+plan=Column(String,default="free")
+4
+classRoom(Base):
+__tablename__ ="rooms"
+id=Column(Integer,primary_key =True)
+owner_id =Column(Integer,ForeignKey ("users.id" ))
+title=Column(String)
+meet_link =Column(String)# Google Meet or Zoom URL
+invite_code =Column(String,index=True)
+owner=relationship ("User")
+classTask(Base):
+__tablename__ ="tasks"
+id=Column(Integer,primary_key =True)
+room_id =Column(Integer,ForeignKey ("rooms.id" ))
+title=Column(String)
+column=Column(String,default="todo")# todo, doing, done
+classMessage(Base):
+__tablename__ ="messages"
+id=Column(Integer,primary_key =True)
+room_id =Column(Integer,ForeignKey ("rooms.id" ))
+user_id =Column(Integer,ForeignKey ("users.id" ))
+content =Column(Text)
+created_at =Column(DateTime ,default=datetime .utcnow)
+classFileAsset (Base):
+__tablename__ ="files"
+id=Column(Integer,primary_key =True)
+room_id =Column(Integer,ForeignKey ("rooms.id" ))
+name=Column(String)
+path=Column(String)
+kind=Column(String)# pdf, image, etc.
+FILE: backend/routers/auth.py
+fromfastapi importAPIRouter ,Depends,HTTPException
+frompydantic importBaseModel
+fromsqlalchemy.orm importSession
+fromdbimportget_db
+frommodelsimportUser
+frompasslib.hash importbcrypt
+router=APIRouter (prefix="/auth",tags=["auth"])
+classRegisterIn (BaseModel ):
+5
+email:str
+name:str
+password :str
+@router.post('/register' )
+defregister (payload:RegisterIn ):
+withget_db()asdb:
+ifdb.query(User).filter(User.email==payload.email).first():
+raiseHTTPException (400,"Email already exists" )
+u=User(email=payload.email,name=payload.name,
+password_hash =bcrypt.hash(payload.password ))
+db.add(u)
+db.flush()
+return{"id":u.id,"email":u.email,"name":u.name}
+FILE: backend/routers/rooms.py
+importsecrets
+fromfastapi importAPIRouter ,UploadFile ,File,HTTPException
+frompydantic importBaseModel
+fromdbimportget_db
+frommodelsimportRoom,Task,Message,FileAsset
+fromsqlalchemy.orm importSession
+importos
+router=APIRouter (prefix="/rooms" ,tags=["rooms"])
+UPLOAD_DIR =os.getenv("UPLOAD_DIR" ,"uploads" )
+os.makedirs (UPLOAD_DIR ,exist_ok =True)
+classRoomIn(BaseModel ):
+title:str
+meet_link :str|None=None
+@router.post('/')
+defcreate_room (data:RoomIn):
+withget_db()asdb:
+r=Room(title=data.title,meet_link =data.meet_link or"",
+invite_code =secrets.token_hex (4))
+db.add(r);db.flush()
+return{"id":r.id,"title":r.title,"invite" :r.invite_code ,
+"meet_link" :r.meet_link }
+@router.get('/invite/ {code}')
+defget_room_by_code (code:str):
+6
+withget_db()asdb:
+r=db.query(Room).filter(Room.invite_code ==code).first()
+ifnotr:
+raiseHTTPException (404,"Room not found" )
+return{"id":r.id,"title":r.title,"meet_link" :r.meet_link }
+classTaskIn(BaseModel ):
+title:str
+column:str="todo"
+@router.post('/{room_id} /tasks')
+defadd_task (room_id:int,t:TaskIn):
+withget_db()asdb:
+task=Task(room_id=room_id,title=t.title,column=t.column)
+db.add(task);db.flush()
+return{"id":task.id,"title":task.title,"column" :task.column}
+@router.get('/{room_id} /tasks')
+deflist_tasks (room_id:int):
+withget_db()asdb:
+q=db.query(Task).filter(Task.room_id==room_id).all()
+return[{"id":i.id,"title":i.title,"column" :i.column}foriinq]
+@router.post('/{room_id} /upload' )
+asyncdefupload_pdf (room_id:int,f:UploadFile =File(...)):
+ifnotf.filename .lower().endswith ('.pdf'):
+raiseHTTPException (400,"Only PDF supported" )
+path=os.path.join(UPLOAD_DIR ,f"room{room_id}_{f.filename }")
+withopen(path,'wb')asout:
+out.write(awaitf.read())
+withget_db()asdb:
+fa=FileAsset (room_id=room_id,name=f.filename ,path=path,kind='pdf')
+db.add(fa)
+return{"status" :"ok","name":f.filename ,"path":path}
+FILE: backend/routers/ai.py
+fromfastapi importAPIRouter ,HTTPException
+frompydantic importBaseModel
+importos,requests ,json
+router=APIRouter (prefix="/ai",tags=["ai"])
+HF_API=os.getenv("HF_API" )
+HF_MODEL =os.getenv("HF_MODEL" ,"google/flan-t5-small" )
+7
+HF_URL=f"https://api-inference.huggingface.co/models/ {HF_MODEL }"
+classNotesIn(BaseModel ):
+notes:str
+@router.post('/summarize' )
+defsummarize (data:NotesIn):
+ifnotdata.notes.strip():
+return{"bullets" :[],"flashcards" :[]}
+ifnotHF_API:
+# fallback mock
+sents=[s.strip()forsindata.notes.split('.')ifs.strip()][:5]
+fc=[{"question" :f"Key point {i+1}?","answer" :s}fori,sin
+enumerate (sents)]
+return{"bullets" :sents,"flashcards" :fc}
+prompt=(
+"Summarize these notes into 5 bullets and 5 flashcards (Q/A). Return 
+JSON with keys 'bullets' and 'flashcards'. \n\n"+data.notes
+)
+r=requests .post(HF_URL,headers={"Authorization" :f"Bearer {HF_API}"},
+json={"inputs" :prompt},timeout=25)
+try:
+resp=r.json()
+text=resp[0].get('generated_text' ,'')ifisinstance (resp,list)else
+json.dumps(resp)
+returnjson.loads(text)
+exceptException :
+raiseHTTPException (502,"AI provider error" )
+classQuestionIn (BaseModel ):
+question :str
+@router.post('/qa')
+defqa(data:QuestionIn ):
+ifnotHF_API:
+return{"answer" :"This is a mock answer. Add HF_API for real. Example: 
+Break the concept into definitions + example." }
+prompt=f"Answer in under 150 words with one example. \nQUESTION: 
+{data.question }"
+r=requests .post(HF_URL,headers={"Authorization" :f"Bearer {HF_API}"},
+json={"inputs" :prompt},timeout=20)
+try:
+resp=r.json()
+text=resp[0].get('generated_text' ,'')ifisinstance (resp,list)else
+str(resp)
+return{"answer" :text}
+exceptException :
+return{"answer" :"AI response unavailable." }
+8
+FILE: backend/routers/files.py
+fromfastapi importAPIRouter ,HTTPException
+frompydantic importBaseModel
+frompdfminer.high_level importextract_text
+importos
+router=APIRouter (prefix="/files" ,tags=["files"])
+classReadIn(BaseModel ):
+path:str
+@router.post('/read')
+defread_pdf (data:ReadIn):
+ifnotos.path.exists(data.path):
+raiseHTTPException (404,"File not found" )
+try:
+text=extract_text (data.path)
+return{"text":text[:5000]}# cap for demo
+exceptException :
+raiseHTTPException (400,"Unable to parse PDF" )
+FILE: backend/routers/payments.py
+fromfastapi importAPIRouter
+frompydantic importBaseModel
+router=APIRouter (prefix="/payments" ,tags=["payments" ])
+PRICE_KES =650
+classCheckoutIn (BaseModel ):
+user_id:int
+@router.post('/checkout' )
+defcheckout (data:CheckoutIn ):
+# Stub response. Replace with real IntaSend REST call.
+return{
+"amount_kes" :PRICE_KES ,
+"provider" :"IntaSend" ,
+"status" :"initialized" ,
+9
+"payment_link" :"https://pay.intasend.com/checkout/example"
+}
+FILE: backend/app.py
+fromfastapi importFastAPI
+fromdbimportBase,engine
+importmodels
+fromrouters importauth,rooms,ai,files,payments
+app=FastAPI(title="StudyBuddy API" )
+# Create tables
+Base.metadata .create_all (bind=engine)
+# Routers
+app.include_router (auth.router)
+app.include_router (rooms.router)
+app.include_router (ai.router)
+app.include_router (files.router)
+app.include_router (payments .router)
+@app.get('/')
+defroot():
+return{"status" :"ok","service" :"StudyBuddy" }
+FILE: frontend/index.html
+<!doctype html>
+<html>
+<head>
+<metacharset="utf-8" />
+<metaname="viewport" content="width=device-width, initial-scale=1" />
+<title>StudyBuddy — Project Rooms </title>
+<linkrel="stylesheet" href="styles.css" />
+</head>
+<body>
+<headerclass="topbar" >
+<divclass="logo">🤖📚 StudyBuddy </div>
+<divclass="actions" >
+<buttonid="newRoomBtn" >New Room </button>
+10
+<buttonid="checkoutBtn" >Upgrade (KES 650/yr) </button>
+</div>
+</header>
+<mainclass="grid">
+<asideclass="sidebar" >
+<h3>Rooms</h3>
+<ulid="roomList" ></ul>
+<divclass="invite" >
+<inputid="inviteCode" placeholder ="Invite code" />
+<buttonid="joinBtn" >Join</button>
+</div>
+</aside>
+<section class="content" >
+<divclass="roomHeader" >
+<inputid="roomTitle" placeholder ="Room title" />
+<inputid="meetLink" placeholder ="Google Meet / Zoom link" />
+<buttonid="saveRoom" >Save</button>
+</div>
+<divclass="kanban" >
+<divclass="col"data-col ="todo">
+<h4>To Do</h4>
+<ulid="todo"></ul>
+<divclass="addTask" >
+<inputid="newTaskTitle" placeholder ="New task" />
+<buttonid="addTaskBtn" >Add</button>
+</div>
+</div>
+<divclass="col"data-col ="doing">
+<h4>Doing</h4>
+<ulid="doing"></ul>
+</div>
+<divclass="col"data-col ="done">
+<h4>Done</h4>
+<ulid="done"></ul>
+</div>
+</div>
+<divclass="panels" >
+<section class="panel">
+<h4>AI Tutor </h4>
+<textarea id="notes" placeholder ="Paste notes to summarize & make 
+flashcards" ></textarea >
+<buttonid="summarizeBtn" >Summarize + Flashcards </button>
+<textarea id="question" placeholder ="Ask a question" ></textarea >
+<buttonid="qaBtn">Ask AI</button>
+11
+<preid="aiOut"></pre>
+</section>
+<section class="panel">
+<h4>Whiteboard </h4>
+<canvasid="board" width="640"height="360"></canvas>
+<div>
+<buttonid="pen">Pen</button>
+<buttonid="eraser" >Eraser</button>
+<buttonid="clear">Clear</button>
+<buttonid="exportPNG" >Export PNG </button>
+</div>
+</section>
+<section class="panel">
+<h4>PDF → Flipbook </h4>
+<inputtype="file"id="pdfInput" accept="application/pdf" />
+<buttonid="uploadPdf" >Upload</button>
+<divid="flipbook" class="flipbook" ></div>
+</section>
+</div>
+</section>
+</main>
+<scriptsrc="app.js" ></script>
+<scriptsrc="whiteboard.js" ></script>
+<scriptsrc="flipbook.js" ></script>
+</body>
+</html>
+FILE: frontend/styles.css
+*{box-sizing :border-box }body{margin:0;font-family :Inter,Arial,sans-
+serif;background :#0f1115;color:#eaeef6}
+.topbar{display:flex;justify-content :space-between ;align-items :center;padding:
+12px16px;background :#121826;border-bottom :1pxsolid#1f2636}
+.logo{font-weight :800}
+.actions button{margin-left :8px}
+.grid{display:grid;grid-template-columns :260px1fr;gap:12px;padding:12px}
+.sidebar{background :#121826;border:1pxsolid#1f2636;border-radius :12px;padding:
+12px}
+.content{display:flex;flex-direction :column;gap:12px}
+.roomHeader {display:flex;gap:8px}
+.roomHeader input{flex:1}
+12
+.kanban{display:grid;grid-template-columns :repeat(3,1fr);gap:12px}
+.col{background :#121826;border:1pxsolid#1f2636;border-radius :12px;padding:
+12px}
+.colh4{margin-top :0}
+.addTask{display:flex;gap:8px;margin-top :8px}
+.panels{display:grid;grid-template-columns :repeat(3,1fr);gap:12px}
+.panel{background :#121826;border:1pxsolid#1f2636;border-radius :12px;padding:
+12px}
+textarea ,input,button{background :#0b1320;color:#eaeef6;border:1pxsolid
+#253150;border-radius :8px;padding:8px}
+button{cursor:pointer}
+.flipbook {height:360px;overflow :auto;border:1pxdashed#253150;border-radius :
+8px;padding:8px}
+.page{background :#0b1320;margin:8px0;padding:12px;border-radius :6px}
+ul{list-style :none;margin:0;padding:0}li{margin:6px0;padding:
+8px;background :#0b1320;border:1pxsolid#253150;border-radius :6px}
+FILE: frontend/app.js
+constAPI="http://localhost:8000" ;
+letcurrentRoom =null;
+// Rooms sidebar
+asyncfunction createRoom (){
+consttitle=prompt("Room title?" )||"My Study Room" ;
+constmeet_link =document .getElementById ('meetLink' ).value||'';
+constr=awaitfetch(`${API}/rooms/` ,{method:'POST',headers:{'Content-
+Type':'application/json' },body:JSON.stringify ({title,
+meet_link })}).then(r=>r.json());
+addRoomToList (r);
+selectRoom (r.id,r.title,r.meet_link );
+alert(`Invite code: ${r.invite}`);
+}
+function addRoomToList (r){
+constli=document .createElement ('li');
+li.textContent =r.title||`Room #${r.id}`;
+li.onclick =()=>selectRoom (r.id,r.title,r.meet_link );
+document .getElementById ('roomList' ).appendChild (li);
+}
+function selectRoom (id,title,meet){
+currentRoom =id;
+document .getElementById ('roomTitle' ).value=title||'';
+13
+document .getElementById ('meetLink' ).value=meet||'';
+loadTasks ();
+}
+// Tasks
+asyncfunction addTask(){
+if(!currentRoom )returnalert('Create or select a room first' );
+consttitle=document .getElementById ('newTaskTitle' ).value.trim();
+if(!title)return;
+constt=awaitfetch(`${API}/rooms/${currentRoom }/tasks`,{method:'POST',
+headers:{'Content-Type' :'application/json' },body:
+JSON.stringify ({title})}).then(r=>r.json());
+renderTask (t);
+document .getElementById ('newTaskTitle' ).value='';
+}
+asyncfunction loadTasks (){
+constlist=awaitfetch(`${API}/rooms/${currentRoom }/
+tasks`).then(r=>r.json());
+['todo','doing','done'].forEach(c=>document .getElementById (c).innerHTML ='');
+list.forEach(renderTask );
+}
+function renderTask (t){
+constli=document .createElement ('li');
+li.textContent =t.title;
+document .getElementById (t.column).appendChild (li);
+}
+// AI Tutor
+asyncfunction summarize (){
+constnotes=document .getElementById ('notes').value;
+constdata=awaitfetch(`${API}/ai/summarize` ,{method:'POST',headers:
+{'Content-Type' :'application/json' },body:
+JSON.stringify ({notes})}).then(r=>r.json());
+document .getElementById ('aiOut').textContent =JSON.stringify (data,null,2);
+}
+asyncfunction ask(){
+constquestion =document .getElementById ('question' ).value;
+constdata=awaitfetch(`${API}/ai/qa`,{method:'POST',headers:{'Content-
+Type':'application/json' },body:JSON.stringify ({question })}).then(r=>r.json());
+document .getElementById ('aiOut').textContent =data.answer||'No answer' ;
+}
+// PDF upload
+asyncfunction uploadPdf (){
+if(!currentRoom )returnalert('Select a room' );
+14
+constf=document .getElementById ('pdfInput' ).files[0];
+if(!f)returnalert('Pick a PDF' );
+constfd=newFormData ();fd.append('f',f);
+constres=awaitfetch(`${API}/rooms/${currentRoom }/upload` ,{method:'POST',
+body:fd}).then(r=>r.json());
+// request text
+consttxt=awaitfetch(`${API}/files/read` ,{method:'POST',headers:
+{'Content-Type' :'application/json' },body:JSON.stringify ({path:
+res.path})}).then(r=>r.json());
+// build flipbook pages (mock pagination)
+buildFlipbook (txt.text||'');
+}
+function buildFlipbook (text){
+constfb=document .getElementById ('flipbook' );
+fb.innerHTML ='';
+constpages=text.match(/.{1,800}/gs )||[];
+pages.slice(0,10).forEach((chunk,i)=>{
+constdiv=document .createElement ('div');
+div.className ='page';
+div.innerHTML =`<h5>Page ${i+1}</h5><p> ${chunk.replace(/\n/g,'<br/>')}</
+p>`;
+fb.appendChild (div);
+});
+}
+// Payments
+asyncfunction checkout (){
+constresp=awaitfetch(`${API}/payments/checkout` ,{method:'POST',headers:
+{'Content-Type' :'application/json' },body:JSON.stringify ({user_id:
+1})}).then(r=>r.json());
+alert(`Proceed to payment: ${resp.payment_link }`);
+window.open(resp.payment_link ,'_blank' );
+}
+// Invite join
+asyncfunction joinByCode (){
+constcode=document .getElementById ('inviteCode' ).value.trim();
+if(!code)return;
+constr=awaitfetch(`${API}/rooms/invite/ ${code}`).then(r=>r.json());
+addRoomToList (r);selectRoom (r.id,r.title,r.meet_link );
+}
+// Events
+document .getElementById ('newRoomBtn' ).onclick =createRoom ;
+document .getElementById ('addTaskBtn' ).onclick =addTask;
+document .getElementById ('summarizeBtn' ).onclick =summarize ;
+document .getElementById ('qaBtn').onclick =ask;
+15
+document .getElementById ('uploadPdf' ).onclick =uploadPdf ;
+document .getElementById ('checkoutBtn' ).onclick =checkout ;
+document .getElementById ('joinBtn' ).onclick =joinByCode ;
+FILE: frontend/whiteboard.js
+constcanvas=document .getElementById ('board');
+constctx=canvas.getContext ('2d');
+letdrawing =false,erasing =false,last=null;
+canvas.addEventListener ('mousedown' ,e=>{drawing =true;last=[e.offsetX,
+e.offsetY];});
+canvas.addEventListener ('mouseup' ,()=>drawing=false);
+canvas.addEventListener ('mouseleave' ,()=>drawing=false);
+canvas.addEventListener ('mousemove' ,e=>{
+if(!drawing)return;
+ctx.lineWidth =erasing ?16:3;
+ctx.strokeStyle =erasing ?'#0b1320' :'#eaeef6' ;
+ctx.lineCap='round';
+ctx.beginPath ();
+ctx.moveTo(last[0],last[1]);
+ctx.lineTo(e.offsetX,e.offsetY);
+ctx.stroke();
+last=[e.offsetX,e.offsetY];
+});
+document .getElementById ('pen').onclick =()=>erasing=false;
+document .getElementById ('eraser' ).onclick =()=>erasing=true;
+document .getElementById ('clear').onclick =()=>ctx.clearRect (0,
+0,canvas.width,canvas.height);
+document .getElementById ('exportPNG' ).onclick =()=>{
+consturl=canvas.toDataURL ('image/png' );
+consta=document .createElement ('a');a.href=url;
+a.download ='whiteboard.png' ;a.click();
+};
+FILE: frontend/flipbook.js
+// Basic CSS flipbook substitute: vertical pages with next/prev via scroll
+// Already built in app.js buildFlipbook(). This file can hold future 
+enhancements.
+16
+How to demo
+Start backend: uvicorn app:app --reload  (in /backend)
+Open frontend/index.html  in a local server
+Create a room, copy the invite code , paste it into the Join box
+Add tasks to the Kanban
+Paste notes → Summarize + Flashcards, ask a question
+Draw on the whiteboard, export PNG
+Upload a PDF; it becomes a flipbook-like paged viewer
+Click Upgrade to open the IntaSend stub checkout link
+Notes on production
+Replace SQLite with PostgreSQL via DB_URL
+Secure auth (JWT) and CORS
+Replace AI and IntaSend stubs with real keys and error handling
+Use PDF.js canvas rendering for true flipbook visuals or embed FlipHTML5 viewer if you have an
+account/API ```1. 
+2. 
+3. 
+4. 
+5. 
+6. 
+7. 
+8. 
+• 
+• 
+• 
+• 
+17
+                </div>
+                <div class="page-info">
+                    <p>Pages: 17 | Uploaded: 2025-08-30 05:49</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        
