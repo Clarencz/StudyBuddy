@@ -1192,6 +1192,3 @@ For help with integrating StudyBuddy Enhanced API:
 
 ---
 
-**Built with ❤️ by the Manus AI Team**
-
-_StudyBuddy Enhanced API - Powering collaborative learning experiences._
