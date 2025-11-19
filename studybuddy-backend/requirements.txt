@@ -18,4 +18,5 @@ openai
 Pyjwt
 gunicorn
 psycopg2-binary
+google-generativeai>=0.3.0
 

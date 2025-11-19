@@ -6,79 +6,71 @@ from src.extensions import db
 from src.models.ai_tutor import AIConversation, AIMessage, Flashcard, PracticeTest
 from src.routes.auth import token_required
 
-# OpenAI integration
+# Google Gemini integration
 try:
-    import openai
-    openai.api_key = os.environ.get('OPENAI_API_KEY')
-    openai.api_base = os.environ.get('OPENAI_API_BASE', 'https://api.openai.com/v1')
-    OPENAI_AVAILABLE = True
+    import google.generativeai as genai
+    genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+    GEMINI_AVAILABLE = True
 except ImportError:
-    OPENAI_AVAILABLE = False
+    GEMINI_AVAILABLE = False
 
 ai_bp = Blueprint("ai", __name__)
 
 # Available AI models
 AVAILABLE_MODELS = {
-    'gpt-3.5-turbo': {
-        'name': 'GPT-3.5 Turbo',
+    'gemini-1.5-flash': {
+        'name': 'Gemini 1.5 Flash',
         'description': 'Fast and efficient for most tasks',
-        'max_tokens': 4096,
+        'max_tokens': 8192,
         'cost_tier': 'low'
     },
-    'gpt-4': {
-        'name': 'GPT-4',
+    'gemini-1.5-pro': {
+        'name': 'Gemini 1.5 Pro',
         'description': 'Most capable model for complex reasoning',
-        'max_tokens': 8192,
-        'cost_tier': 'high'
-    },
-    'gpt-4-turbo': {
-        'name': 'GPT-4 Turbo',
-        'description': 'Latest GPT-4 with improved performance',
-        'max_tokens': 128000,
+        'max_tokens': 32768,
         'cost_tier': 'medium'
+    },
+    'gemini-2.0-flash-exp': {
+        'name': 'Gemini 2.0 Flash (Experimental)',
+        'description': 'Latest experimental model with improved performance',
+        'max_tokens': 8192,
+        'cost_tier': 'low'
     }
 }
 
-def get_ai_response(message, model='gpt-3.5-turbo', conversation_history=None):
-    """Get AI response using specified model"""
-    if not OPENAI_AVAILABLE:
-        return f"AI response to: {message} (OpenAI not available)"
+def get_ai_response(message, model='gemini-1.5-flash', conversation_history=None):
+    """Get AI response using specified Gemini model"""
+    if not GEMINI_AVAILABLE:
+        return f"AI response to: {message} (Gemini not available)"
     
     try:
+        # Initialize the model
+        gemini_model = genai.GenerativeModel(
+            model_name=model,
+            system_instruction="You are StudyBuddy AI, a helpful and knowledgeable tutor. Provide clear, accurate, and educational responses to student questions. Always encourage learning and critical thinking."
+        )
+        
         # Build conversation context
-        messages = [
-            {
-                "role": "system",
-                "content": "You are StudyBuddy AI, a helpful and knowledgeable tutor. Provide clear, accurate, and educational responses to student questions. Always encourage learning and critical thinking."
-            }
-        ]
+        chat_history = []
         
         # Add conversation history if provided
         if conversation_history:
             for msg in conversation_history[-10:]:  # Last 10 messages for context
-                messages.append({
-                    "role": msg.role,
-                    "content": msg.content
+                chat_history.append({
+                    "role": "user" if msg.role == "user" else "model",
+                    "parts": [msg.content]
                 })
         
-        # Add current message
-        messages.append({
-            "role": "user",
-            "content": message
-        })
+        # Start chat with history
+        chat = gemini_model.start_chat(history=chat_history)
         
-        # Make API call
-        response = openai.ChatCompletion.create(
-            model=model,
-            messages=messages,
-            max_tokens=AVAILABLE_MODELS.get(model, {}).get('max_tokens', 4096) // 2,
-            temperature=0.7
-        )
+        # Send message and get response
+        response = chat.send_message(message)
         
-        return response.choices[0].message.content
+        return response.text
         
     except Exception as e:
-        current_app.logger.error(f"OpenAI API error: {str(e)}")
+        current_app.logger.error(f"Gemini API error: {str(e)}")
         return f"I apologize, but I'm having trouble processing your request right now. Please try again later."
 
 # ---------- Model Management ----------
@@ -89,8 +81,8 @@ def get_available_models(current_user):
     """Get list of available AI models"""
     return jsonify({
         "models": AVAILABLE_MODELS,
-        "default_model": "gpt-3.5-turbo",
-        "openai_available": OPENAI_AVAILABLE
+        "default_model": "gemini-1.5-flash",
+        "gemini_available": GEMINI_AVAILABLE
     }), 200
 
 # ---------- Conversations ----------
@@ -101,7 +93,7 @@ def create_conversation(current_user):
     data = request.get_json()
     title = data.get("title", "New Conversation")
     conversation_type = data.get("type", "qa")
-    model = data.get("model", "gpt-3.5-turbo")
+    model = data.get("model", "gemini-1.5-flash")
 
     # Validate model
     if model not in AVAILABLE_MODELS:
@@ -209,7 +201,7 @@ def add_message(current_user, conversation_id):
     # Get AI response using the conversation's model
     ai_response = get_ai_response(
         user_message,
-        model=conversation.model or 'gpt-3.5-turbo',
+        model=conversation.model or 'gemini-1.5-flash',
         conversation_history=history
     )
     
@@ -272,7 +264,7 @@ def quick_chat(current_user):
     """Quick chat without creating a conversation"""
     data = request.get_json()
     message = data.get("message")
-    model = data.get("model", "gpt-3.5-turbo")
+    model = data.get("model", "gemini-1.5-flash")
     
     if not message or not message.strip():
         return jsonify({"error": "Message is required"}), 400
@@ -340,7 +332,7 @@ def generate_flashcards(current_user):
     data = request.get_json()
     text = data.get("text", "")
     count = min(data.get("count", 5), 20)  # Limit to 20 flashcards
-    model = data.get("model", "gpt-3.5-turbo")
+    model = data.get("model", "gemini-1.5-flash")
     
     if not text.strip():
         return jsonify({"error": "Text content is required"}), 400
@@ -349,28 +341,25 @@ def generate_flashcards(current_user):
         return jsonify({"error": "Invalid model specified"}), 400
 
     # Generate flashcards using AI
-    if OPENAI_AVAILABLE:
+    if GEMINI_AVAILABLE:
         try:
             prompt = f"""
             Create {count} educational flashcards from the following text. Format as JSON array with objects containing 'question', 'answer', 'difficulty' (easy/medium/hard), and 'category' fields.
             
-            Text: {text[:2000]}  # Limit text length
+            Text: {text[:2000]}
             
-            Return only the JSON array, no additional text.
+            Return only the JSON array, no additional text or markdown formatting.
             """
             
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are an educational content creator. Generate high-quality flashcards that test understanding, not just memorization."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=2000,
-                temperature=0.7
+            gemini_model = genai.GenerativeModel(
+                model_name=model,
+                system_instruction="You are an educational content creator. Generate high-quality flashcards that test understanding, not just memorization. Always return valid JSON."
             )
             
+            response = gemini_model.generate_content(prompt)
+            
             # Parse AI response
-            ai_content = response.choices[0].message.content.strip()
+            ai_content = response.text.strip()
             if ai_content.startswith('```json'):
                 ai_content = ai_content[7:-3]
             elif ai_content.startswith('```'):
@@ -405,7 +394,7 @@ def generate_flashcards(current_user):
             current_app.logger.error(f"Flashcard generation error: {str(e)}")
             # Fall back to stub generation
     
-    # Stub generation if OpenAI is not available
+    # Stub generation if Gemini is not available
     generated = []
     for i in range(count):
         flashcard = Flashcard(
@@ -463,7 +452,7 @@ def generate_practice_test(current_user):
     data = request.get_json()
     text = data.get("text", "")
     question_count = min(data.get("question_count", 5), 20)
-    model = data.get("model", "gpt-3.5-turbo")
+    model = data.get("model", "gemini-1.5-flash")
     
     if not text.strip():
         return jsonify({"error": "Text content is required"}), 400
@@ -472,7 +461,7 @@ def generate_practice_test(current_user):
         return jsonify({"error": "Invalid model specified"}), 400
 
     # Generate practice test using AI
-    if OPENAI_AVAILABLE:
+    if GEMINI_AVAILABLE:
         try:
             prompt = f"""
             Create a practice test with {question_count} multiple choice questions from the following text.
@@ -480,21 +469,18 @@ def generate_practice_test(current_user):
             
             Text: {text[:2000]}
             
-            Return only the JSON object, no additional text.
+            Return only the JSON object, no additional text or markdown formatting.
             """
             
-            response = openai.ChatCompletion.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are an educational assessment creator. Generate high-quality multiple choice questions that test comprehension and application."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=3000,
-                temperature=0.7
+            gemini_model = genai.GenerativeModel(
+                model_name=model,
+                system_instruction="You are an educational assessment creator. Generate high-quality multiple choice questions that test comprehension and application. Always return valid JSON."
             )
             
+            response = gemini_model.generate_content(prompt)
+            
             # Parse AI response
-            ai_content = response.choices[0].message.content.strip()
+            ai_content = response.text.strip()
             if ai_content.startswith('```json'):
                 ai_content = ai_content[7:-3]
             elif ai_content.startswith('```'):

@@ -23,9 +23,7 @@
 
 ## 👥 Group Members
 
-1. _Rachael Kiarie_ – [raychellekiarie756@gmail.com](mailto:raychellekiarie756@gmail.com) <br>
-2. _Clarence Mabeya_ – [cmabeya3@gmail.com](mailto:cmabeya3@gmail.com) <br>
-3. _Regina Mutinda_ – [rmmutinda02@gmail.com](mailto:rmmutinda02@gmail.com)<br>
+1. _Clarence Mabeya_ – [cmabeya3@gmail.com](mailto:cmabeya3@gmail.com) <br>
 
 ## 🚀 Major Enhancements & Fixes
 
@@ -430,10 +428,3 @@ docker-compose up --build
 
 ---
 
-**Version**: 2.0.0 Enhanced  
-**Release Date**: August 31, 2025  
-**Status**: Production Ready ✅  
-**Tested**: Comprehensive testing completed  
-**Security**: Enterprise-grade security implemented
-
-**🎉 Ready for deployment and production use!**
