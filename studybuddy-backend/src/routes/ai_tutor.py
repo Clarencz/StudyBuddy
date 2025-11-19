@@ -16,29 +16,35 @@ except ImportError:
 
 ai_bp = Blueprint("ai", __name__)
 
-# Available AI models
+# Available AI models - Updated to current Gemini 2.x models
 AVAILABLE_MODELS = {
-    'gemini-1.5-flash': {
-        'name': 'Gemini 1.5 Flash',
-        'description': 'Fast and efficient for most tasks',
+    'gemini-2.5-flash-lite': {
+        'name': 'Gemini 2.5 Flash Lite',
+        'description': 'Fast, low-cost, high-performance model for everyday tasks',
         'max_tokens': 8192,
         'cost_tier': 'low'
     },
-    'gemini-1.5-pro': {
-        'name': 'Gemini 1.5 Pro',
-        'description': 'Most capable model for complex reasoning',
-        'max_tokens': 32768,
+    'gemini-2.5-flash': {
+        'name': 'Gemini 2.5 Flash',
+        'description': 'Best model for price-performance with thinking capabilities',
+        'max_tokens': 8192,
         'cost_tier': 'medium'
     },
-    'gemini-2.0-flash-exp': {
-        'name': 'Gemini 2.0 Flash (Experimental)',
-        'description': 'Latest experimental model with improved performance',
+    'gemini-2.5-pro': {
+        'name': 'Gemini 2.5 Pro',
+        'description': 'Most capable model with advanced reasoning and thinking',
+        'max_tokens': 32768,
+        'cost_tier': 'high'
+    },
+    'gemini-2.0-flash': {
+        'name': 'Gemini 2.0 Flash',
+        'description': 'Fast agentic model with 1M context window',
         'max_tokens': 8192,
-        'cost_tier': 'low'
+        'cost_tier': 'medium'
     }
 }
 
-def get_ai_response(message, model='gemini-1.5-flash', conversation_history=None):
+def get_ai_response(message, model='gemini-2.5-flash-lite', conversation_history=None):
     """Get AI response using specified Gemini model"""
     if not GEMINI_AVAILABLE:
         return f"AI response to: {message} (Gemini not available)"
@@ -81,7 +87,7 @@ def get_available_models(current_user):
     """Get list of available AI models"""
     return jsonify({
         "models": AVAILABLE_MODELS,
-        "default_model": "gemini-1.5-flash",
+        "default_model": "gemini-2.5-flash-lite",
         "gemini_available": GEMINI_AVAILABLE
     }), 200
 
@@ -93,7 +99,7 @@ def create_conversation(current_user):
     data = request.get_json()
     title = data.get("title", "New Conversation")
     conversation_type = data.get("type", "qa")
-    model = data.get("model", "gemini-1.5-flash")
+    model = data.get("model", "gemini-2.5-flash-lite")
 
     # Validate model
     if model not in AVAILABLE_MODELS:
@@ -201,7 +207,7 @@ def add_message(current_user, conversation_id):
     # Get AI response using the conversation's model
     ai_response = get_ai_response(
         user_message,
-        model=conversation.model or 'gemini-1.5-flash',
+        model=conversation.model or 'gemini-2.5-flash-lite',
         conversation_history=history
     )
     
@@ -264,7 +270,7 @@ def quick_chat(current_user):
     """Quick chat without creating a conversation"""
     data = request.get_json()
     message = data.get("message")
-    model = data.get("model", "gemini-1.5-flash")
+    model = data.get("model", "gemini-2.5-flash-lite")
     
     if not message or not message.strip():
         return jsonify({"error": "Message is required"}), 400
@@ -332,7 +338,7 @@ def generate_flashcards(current_user):
     data = request.get_json()
     text = data.get("text", "")
     count = min(data.get("count", 5), 20)  # Limit to 20 flashcards
-    model = data.get("model", "gemini-1.5-flash")
+    model = data.get("model", "gemini-2.5-flash-lite")
     
     if not text.strip():
         return jsonify({"error": "Text content is required"}), 400
@@ -452,7 +458,7 @@ def generate_practice_test(current_user):
     data = request.get_json()
     text = data.get("text", "")
     question_count = min(data.get("question_count", 5), 20)
-    model = data.get("model", "gemini-1.5-flash")
+    model = data.get("model", "gemini-2.5-flash-lite")
     
     if not text.strip():
         return jsonify({"error": "Text content is required"}), 400
