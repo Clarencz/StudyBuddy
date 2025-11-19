@@ -296,8 +296,7 @@ const LandingPage = () => {
               <span className="text-lg font-semibold">StudyBuddy</span>
             </div>
             <div className="text-gray-400 text-sm">
-              © 2025 StudyBuddy. All rights reserved. Built with ❤️ for
-              students.
+              © 2025 StudyBuddy. All rights reserved.
             </div>
           </div>
         </div>

@@ -52,7 +52,7 @@ def create_app():
     CORS(app,
          origins=[
              "https://studybuddy-production-fee1.up.railway.app",
-             "https://study-buddy-hackathon-main.vercel.app"
+             "https://study-find-buddy.vercel.app"
              
          ],
          supports_credentials=True,
